@@ -2,7 +2,7 @@
 
 #include "ESP8266.h"
 #include "Time.h"
-#include "../../examples_gdef.h"
+#include "appconfig.h"
 
 #include "ntp.h"
 
