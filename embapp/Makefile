@@ -66,6 +66,9 @@ APPL_DIR     += $(RCA_DIR)/examples/MultiTaskText/libraries/Grove_Digital_Light_
 APPL_CXXOBJS += Digital_Light_TSL2561.o
 APPL_COBJS   += 
 
+APPL_DIR     += $(RCA_DIR)/arduino_lib//libraries/Time
+APPL_CXXOBJS += Time.o
+
 APPL_DIR     += ..
 
 include $(RCA_DIR)/lib/Makefile.rca
