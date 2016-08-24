@@ -26,7 +26,6 @@ unsigned long sendNTPpacket(String address);
 
 void ntp_update_cyc(intptr_t exinf)
 {
-    Serial.println("CycHandler");
     iact_tsk( NTP_TASK );
 }
 
@@ -102,7 +101,6 @@ void ntp_task(intptr_t exinf)
     // NTPサーバからのパケット受信
     // バッファに受信データを読み込む
     uint32_t len = WiFi.recv(packetBuffer, NTP_PACKET_SIZE, 10000);
-    Serial.print("len = "); Serial.println(len);
     if (len > 0) {
         // 時刻情報はパケットの40バイト目からはじまる4バイトのデータ
         unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
@@ -112,8 +110,6 @@ void ntp_task(intptr_t exinf)
         // 1900年1月1日0時との相対的な差を秒単位で表している
         // 小数部は切り捨てて、秒を求めている
         unsigned long secsSince1900 = highWord << 16 | lowWord;
-        Serial.print("Seconds since Jan 1 1900 = " );
-        Serial.println(secsSince1900);
 
         // NTPタイムスタンプをUNIXタイムに変換する
         // UNITタイムは1970年1月1日0時からはじまる
@@ -121,8 +117,6 @@ void ntp_task(intptr_t exinf)
         const unsigned long seventyYears = 2208988800UL;
         // NTPタイムスタンプから70年分の秒を引くとUNIXタイムが得られる
         unsigned long epoch = secsSince1900 - seventyYears; 
-        Serial.print("Unix time = ");
-        Serial.println(epoch);
 
         // Timeライブラリに時間を設定(UNIXタイム)
         // 日本標準時にあわせるために＋9時間しておく
