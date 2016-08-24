@@ -7,3 +7,5 @@ rca.*
 offset.h
 libkernel.a
 
+*.sublime-project
+*.sublime-workspace
