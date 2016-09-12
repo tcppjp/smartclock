@@ -33,7 +33,7 @@ USE_WIRE = true
 #
 #  RCAのディレクトリの定義
 #
-RCA_DIR = ../../..
+RCA_DIR = ../..
 
 #
 #  ASPのソースファイルのディレクトリの定義
@@ -62,13 +62,23 @@ APPL_DIR     += $(RCA_DIR)/examples/MultiTaskText/libraries/OLED_Display12864
 APPL_CXXOBJS += SeeedOLED.o
 APPL_COBJS   += 
 
+APPL_DIR     += $(RCA_DIR)/arduino_lib/hardware/arduino/samd/libraries/SPI
+APPL_CXXOBJS += SPI.o
+
 APPL_DIR     += $(RCA_DIR)/examples/MultiTaskText/libraries/Grove_Digital_Light_Sensor
 APPL_CXXOBJS += Digital_Light_TSL2561.o
 APPL_COBJS   += 
 
-APPL_DIR     += $(RCA_DIR)/arduino_lib//libraries/Time
+APPL_DIR     += vendor/Adafruit
+APPL_CXXOBJS += Adafruit_ILI9341.o Adafruit_STMPE610.o Adafruit_GFX.o
+APPL_COBJS   += glcdfont.o
+
+APPL_DIR     += vendor/Time
 APPL_CXXOBJS += Time.o
 
 APPL_DIR     += ..
 
 include $(RCA_DIR)/lib/Makefile.rca
+
+# Say goodbye to the 20th century's standard!
+CXXFLAGS += -std=gnu++11
