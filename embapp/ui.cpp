@@ -25,6 +25,7 @@ namespace
 	SCRect g_dirtyRect;
 	UIElement *g_rootElement = nullptr;
 	UIElement *g_mouseCaptureElement = nullptr;
+	UIElement *g_keyboardFocusElement = nullptr;
 
 	namespace colors
 	{
@@ -59,6 +60,12 @@ namespace
 			_child(nullptr),
 			_bounds {0, 0, 0, 0}
 		{ } 
+		~UIElement()
+		{
+			if (g_keyboardFocusElement == this) {
+				g_keyboardFocusElement = nullptr;
+			}
+		}
 		const SCRect &bounds() { return _bounds; }
 		void setBounds(const SCRect &newBounds)
 		{
@@ -113,6 +120,26 @@ namespace
 			}
 			o->_parent = this;
 			o->invalidate();
+		}
+		void focus()
+		{
+			if (g_keyboardFocusElement == this) {
+				return;
+			}
+			auto *lastFocusElem = g_keyboardFocusElement;
+			g_keyboardFocusElement = this;
+			if (lastFocusElem) {
+				lastFocusElem->lostFocus();
+			}
+			gotFocus();
+		}
+		void blur()
+		{
+			if (g_keyboardFocusElement != this) {
+				return;
+			}
+			g_keyboardFocusElement = nullptr;
+			lostFocus();
 		}
 		SCPoint screenLocation() const
 		{
@@ -180,6 +207,10 @@ namespace
 		virtual void clientMouseMove(const SCPoint &mouseLoc)
 		{ }
 		virtual void clientMouseUp(const SCPoint &mouseLoc)
+		{ }
+		virtual void gotFocus()
+		{ }
+		virtual void lostFocus()
 		{ }
 	};	
 
