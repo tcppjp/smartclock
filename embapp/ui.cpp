@@ -146,6 +146,9 @@ namespace
 			UIElementPaintContext &ctx)
 		{
 			SCRect scrBounds = _bounds.translated(offset);
+			if (!scrBounds.intersectsWith(ctx.dirtyRect)) {
+				return;
+			}
 			if (scrBounds.covers(ctx.dirtyRect)) {
 				ctx.firstLayer = ctx.layer;
 			}
@@ -158,6 +161,9 @@ namespace
 			UIElementPaintContext &ctx)
 		{
 			SCRect scrBounds = _bounds.translated(offset);
+			if (!scrBounds.intersectsWith(ctx.dirtyRect)) {
+				return;
+			}
 			if (ctx.layer >= ctx.firstLayer) {
 				clientPaint(scrBounds);
 			}
@@ -324,7 +330,7 @@ namespace
 			int16_t tx, ty; uint16_t tw, th;
 			tft.getTextBounds(const_cast<char*>(_text), 0, 0, &tx, &ty, &tw, &th);
 			tft.setCursor(x + (w - tw - tx) / 2, y + (h - th - ty) / 2);
-			tft.print(_text);
+			tft.println(_text);
 		}
 		void clientMouseDown(const SCPoint &mouseLoc) override
 		{
@@ -347,11 +353,138 @@ namespace
 		}
 	};
 
-
+	constexpr const char *softwareKeyboardLines[][3] = {
+		{
+			"qwertyuiop",
+			"asdfghjkl",
+			"zxcvbnm"
+		},
+		{
+			"QWERTYUIOP",
+			"ASDFGHJKL",
+			"ZXCVBNM"
+		},
+		{
+			"1234567890",
+			"-/:;()&@\"",
+			".,?!'"
+		},
+		{
+			"[]{}#%^*+=",
+			"_\\|~<>$:)(",
+			".,?!'"
+		}
+	};
 
 	class SoftwareKeyboardUIElement : public UIElement
 	{
+		ButtonUIElement keys[26];
+		char keystrs[26][2];
+
+		ButtonUIElement shiftKey;
+		ButtonUIElement symbolKey;
+		ButtonUIElement backSpaceKey;
+		ButtonUIElement spaceBar;
+		ButtonUIElement enterKey;
+
+		int8_t currentPlane;
+		void updateKeys()
+		{
+			for (int i = 0; i < 10; ++i) {
+				keystrs[i][0] = softwareKeyboardLines[currentPlane][0][i];
+				keystrs[i][1] = 0;
+			}
+			for (int i = 0; i < 9; ++i) {
+				keystrs[i + 10][0] = softwareKeyboardLines[currentPlane][1][i];
+				keystrs[i + 10][1] = 0;
+			}
+			for (int i = 0; i < 7; ++i) {
+				keystrs[i + 19][0] = softwareKeyboardLines[currentPlane][2][i];
+				keystrs[i + 19][1] = 0;
+			}
+			switch (currentPlane) {
+				case 0:
+					symbolKey.setText("123");
+					shiftKey.setText("^");
+					break;
+				case 1:
+					symbolKey.setText("123");
+					shiftKey.setText("v");
+					break;
+				case 2:
+					symbolKey.setText("ABC");
+					shiftKey.setText("#+");
+					break;
+				case 3:
+					symbolKey.setText("ABC");
+					shiftKey.setText("12");
+					break;
+			}
+		}
 	public:
+		SoftwareKeyboardUIElement() :
+			currentPlane(0)
+		{
+			setBounds(SCRect {0, 155, 240, 165});
+			for (int i = 0; i < 10; ++i) {
+				keys[i].setBounds(SCRect { 
+					static_cast<int16_t>(i * 23 + 5), 5, 23, 35 
+				});
+				keys[i].setText(keystrs[i]);
+			}
+			for (int i = 10; i < 19; ++i) {
+				keys[i].setBounds(SCRect { 
+					static_cast<int16_t>((i - 10) * 23 + 15), 45, 23, 35 
+				});
+				keys[i].setText(keystrs[i]);
+			}
+			for (int i = 19; i < 26; ++i) {
+				keys[i].setBounds(SCRect { 
+					static_cast<int16_t>((i - 19) * 23 + 38), 85, 23, 35 
+				});
+				keys[i].setText(keystrs[i]);
+			}
+			shiftKey.setBounds(SCRect { 5, 85, 28, 35 });
+			shiftKey.setText("^");
+			backSpaceKey.setBounds(SCRect { 204, 85, 31, 35 });
+			backSpaceKey.setText("<X");
+			symbolKey.setBounds(SCRect { 5, 125, 40, 35});
+			spaceBar.setBounds(SCRect { 50, 125, 140, 35 });
+			spaceBar.setText("");
+			enterKey.setBounds(SCRect { 195, 125, 40, 35 });
+			enterKey.setText("ENT");
+			updateKeys();
+			for (auto &e: keys) {
+				appendChild(&e);
+				auto *ep = &e;
+				e.setOnActivated([this, ep] {
+				});
+			}
+			appendChild(&shiftKey);
+			appendChild(&symbolKey);
+			appendChild(&spaceBar);
+			appendChild(&backSpaceKey);
+			appendChild(&enterKey);
+			shiftKey.setOnActivated([&] {
+				currentPlane ^= 1;
+				updateKeys();
+				invalidate();
+			});
+			symbolKey.setOnActivated([&] {
+				currentPlane = (currentPlane ^ 2) & ~1;
+				updateKeys();
+				invalidate();
+			});
+			spaceBar.setOnActivated([&] {
+				
+			});
+			backSpaceKey.setOnActivated([&] {
+
+			});
+			enterKey.setOnActivated([&] {
+
+			});
+		}
 		void clientPaint(const SCRect &scrBounds) override
 		{
 			tft.fillRect(scrBounds.loc.x, scrBounds.loc.y,
@@ -359,6 +492,8 @@ namespace
 				colors::buttonFace);
 		}
 	};
+
+	static SoftwareKeyboardUIElement g_softwareKeyboard;
 
 	class SetupScreenUIElement : public UIElement
 	{
@@ -370,6 +505,7 @@ namespace
 			appendChild(&button);
 			button.setBounds(SCRect {20, 20, 120, 40});
 			button.setText("Yay!");
+			appendChild(&g_softwareKeyboard);
 		} 
 		void clientPaint(const SCRect &scrBounds) override
 		{

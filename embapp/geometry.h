@@ -60,6 +60,11 @@ struct SCRect
 		return left() <= o.left() && top() <= o.top() &&
 			right() >= o.right() && bottom() >= o.bottom();
 	}
+	constexpr inline bool intersectsWith(const SCRect &o) const
+	{
+		return left() < o.right() && top() < o.bottom() &&
+			right() > o.left() && bottom() > o.top();
+	}
 	constexpr inline SCRect translated(const SCPoint &pt) const
 	{
 		return SCRect {loc + pt, size};
