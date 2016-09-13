@@ -312,7 +312,7 @@ namespace
 			tft.setTextSize(2);
 			tft.setTextColor(colors::buttonText);
 			tft.setCursor(x, y);
-			tft.println(text());
+			tft.println(this->text());
 		}
 	};
 
@@ -360,9 +360,9 @@ namespace
 			tft.setTextSize(2);
 			tft.setTextColor(colors::buttonText, colors::buttonFace);
 			int16_t tx, ty; uint16_t tw, th;
-			tft.getTextBounds(const_cast<char*>(text()), 0, 0, &tx, &ty, &tw, &th);
+			tft.getTextBounds(const_cast<char*>(this->text()), 0, 0, &tx, &ty, &tw, &th);
 			tft.setCursor(x + (w - tw - tx) / 2, y + (h - th - ty) / 2);
-			tft.println(text());
+			tft.println(this->text());
 		}
 		void clientMouseDown(const SCPoint &mouseLoc) override
 		{
@@ -410,14 +410,14 @@ namespace
 
 	class SoftwareKeyboardUIElement : public UIElement
 	{
-		ButtonUIElement keys[26];
+		ButtonUIElement<> keys[26];
 		char keystrs[26][2];
 
-		ButtonUIElement shiftKey;
-		ButtonUIElement symbolKey;
-		ButtonUIElement backSpaceKey;
-		ButtonUIElement spaceBar;
-		ButtonUIElement enterKey;
+		ButtonUIElement<> shiftKey;
+		ButtonUIElement<> symbolKey;
+		ButtonUIElement<> backSpaceKey;
+		ButtonUIElement<> spaceBar;
+		ButtonUIElement<> enterKey;
 
 		int8_t currentPlane;
 		void updateKeys()
@@ -529,7 +529,7 @@ namespace
 
 	class SetupScreenUIElement : public UIElement
 	{
-		ButtonUIElement button;
+		ButtonUIElement<> button;
 	public:
 		SetupScreenUIElement()
 		{
