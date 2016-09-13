@@ -1,5 +1,6 @@
 #include "rca.h"
 #include <functional>
+#include <string>
 #include "SPI.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
@@ -278,21 +279,52 @@ namespace
 		}
 	}
 
-	class ButtonUIElement : public UIElement
+	class StaticTextStorage
+	{
+		const char *_text;
+	public:
+		StaticTextStorage() :
+			_text("yay!")
+		{ }
+		/** WARNING: text not copied! */
+		void setText(const char *text) { _text = text; }
+		const char *text() { return _text; }
+	};
+
+	class HeapTextStorage
+	{
+		std::string _text;
+	public:
+		HeapTextStorage()
+		{ }
+		void setText(const char *text) { _text = text; }
+		const char *text() { return _text.c_str(); }
+	};
+
+	template <class TextStor = StaticTextStorage>
+	class LabelUIElement : public UIElement, public TextStor
+	{
+	public:
+		LabelUIElement() { }
+		void clientPaint(const SCRect &scrBounds) override
+		{
+			int x = scrBounds.loc.x, y = scrBounds.loc.y;
+			tft.setTextSize(2);
+			tft.setTextColor(colors::buttonText);
+			tft.setCursor(x, y);
+			tft.println(text());
+		}
+	};
+
+	template <class TextStor = StaticTextStorage>
+	class ButtonUIElement : public UIElement, public TextStor
 	{
 		bool _pressed;
-		const char *_text;
 		std::function<void()> _onActivated;
 	public:
 		ButtonUIElement() :
-			_pressed(false),
-			_text("yay")
+			_pressed(false)
 		{ }
-		/** WARNING: text not copied! */
-		void setText(const char *text)
-		{
-			_text = text;
-		}
 		void setOnActivated(std::function<void()> fn)
 		{
 			_onActivated = fn;
@@ -328,9 +360,9 @@ namespace
 			tft.setTextSize(2);
 			tft.setTextColor(colors::buttonText, colors::buttonFace);
 			int16_t tx, ty; uint16_t tw, th;
-			tft.getTextBounds(const_cast<char*>(_text), 0, 0, &tx, &ty, &tw, &th);
+			tft.getTextBounds(const_cast<char*>(text()), 0, 0, &tx, &ty, &tw, &th);
 			tft.setCursor(x + (w - tw - tx) / 2, y + (h - th - ty) / 2);
-			tft.println(_text);
+			tft.println(text());
 		}
 		void clientMouseDown(const SCPoint &mouseLoc) override
 		{
@@ -476,7 +508,7 @@ namespace
 				invalidate();
 			});
 			spaceBar.setOnActivated([&] {
-				
+
 			});
 			backSpaceKey.setOnActivated([&] {
 
