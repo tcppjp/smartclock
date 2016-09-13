@@ -5,6 +5,7 @@
 #include <SeeedOLED.h>
 
 #include "appconfig.h"
+#include "ui.h"
 
 void setup()
 {
@@ -13,6 +14,7 @@ void setup()
 	SeeedOled.deactivateScroll();
 	SeeedOled.setNormalDisplay();
 	SeeedOled.clearDisplay();
+	ui_setup();
 }
 
 void loop()
