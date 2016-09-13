@@ -12,7 +12,7 @@ namespace pins
 	static constexpr int TftResistiveTouchPanelCS = 8;
 
 	// Ultrasonic Ranger
-	static constexpr int Ranger = 2;
+	static constexpr int Ranger = 7;
 
 	// NCES IoT Base Shield
 	static constexpr int NibsWiFiUartRx = 0;
@@ -21,8 +21,12 @@ namespace pins
 
 	// That robot
 	static constexpr int Servo1 = 4;
-	static constexpr int Servo2 = 5;
-	static constexpr int Servo3 = 7;
+	static constexpr int Servo2 = 3;
+	static constexpr int Servo3 = 2;
+
+	// AquesTaslk pico
+	static constexpr int AquesTalkPico1 = 5;
+	static constexpr int AquesTalkPico2 = 6;
 }
 
 #endif
