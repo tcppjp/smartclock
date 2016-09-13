@@ -23,8 +23,16 @@
  #include "WProgram.h"
 #endif
 #include <Adafruit_GFX.h>
-#include <avr/pgmspace.h>
+#ifdef __AVR
+  #include <avr/pgmspace.h>
+#elif defined(ESP8266)
+  #include <pgmspace.h>
+#endif
 
+
+#if defined (__AVR__) || defined(TEENSYDUINO) || defined (__arm__)
+#define USE_FAST_PINIO
+#endif
 
 #define ILI9341_TFTWIDTH  240
 #define ILI9341_TFTHEIGHT 320
@@ -42,7 +50,7 @@
 #define ILI9341_RDMODE  0x0A
 #define ILI9341_RDMADCTL  0x0B
 #define ILI9341_RDPIXFMT  0x0C
-#define ILI9341_RDIMGFMT  0x0A
+#define ILI9341_RDIMGFMT  0x0D
 #define ILI9341_RDSELFDIAG  0x0F
 
 #define ILI9341_INVOFF  0x20
@@ -87,15 +95,25 @@
 */
 
 // Color definitions
-#define	ILI9341_BLACK   0x0000
-#define	ILI9341_BLUE    0x001F
-#define	ILI9341_RED     0xF800
-#define	ILI9341_GREEN   0x07E0
-#define ILI9341_CYAN    0x07FF
-#define ILI9341_MAGENTA 0xF81F
-#define ILI9341_YELLOW  0xFFE0  
-#define ILI9341_WHITE   0xFFFF
-
+#define ILI9341_BLACK       0x0000      /*   0,   0,   0 */
+#define ILI9341_NAVY        0x000F      /*   0,   0, 128 */
+#define ILI9341_DARKGREEN   0x03E0      /*   0, 128,   0 */
+#define ILI9341_DARKCYAN    0x03EF      /*   0, 128, 128 */
+#define ILI9341_MAROON      0x7800      /* 128,   0,   0 */
+#define ILI9341_PURPLE      0x780F      /* 128,   0, 128 */
+#define ILI9341_OLIVE       0x7BE0      /* 128, 128,   0 */
+#define ILI9341_LIGHTGREY   0xC618      /* 192, 192, 192 */
+#define ILI9341_DARKGREY    0x7BEF      /* 128, 128, 128 */
+#define ILI9341_BLUE        0x001F      /*   0,   0, 255 */
+#define ILI9341_GREEN       0x07E0      /*   0, 255,   0 */
+#define ILI9341_CYAN        0x07FF      /*   0, 255, 255 */
+#define ILI9341_RED         0xF800      /* 255,   0,   0 */
+#define ILI9341_MAGENTA     0xF81F      /* 255,   0, 255 */
+#define ILI9341_YELLOW      0xFFE0      /* 255, 255,   0 */
+#define ILI9341_WHITE       0xFFFF      /* 255, 255, 255 */
+#define ILI9341_ORANGE      0xFD20      /* 255, 165,   0 */
+#define ILI9341_GREENYELLOW 0xAFE5      /* 173, 255,  47 */
+#define ILI9341_PINK        0xF81F
 
 class Adafruit_ILI9341 : public Adafruit_GFX {
 
@@ -125,7 +143,7 @@ class Adafruit_ILI9341 : public Adafruit_GFX {
   uint16_t readcommand16(uint8_t);
   uint32_t readcommand32(uint8_t);
   void     dummyclock(void);
-  */  
+  */
 
   void     spiwrite(uint8_t),
     writecommand(uint8_t c),
@@ -139,15 +157,24 @@ class Adafruit_ILI9341 : public Adafruit_GFX {
 
 
   boolean  hwSPI;
-#if defined (__AVR__)
+#if defined (__AVR__) || defined(TEENSYDUINO)
   uint8_t mySPCR;
   volatile uint8_t *mosiport, *clkport, *dcport, *rsport, *csport;
   int8_t  _cs, _dc, _rst, _mosi, _miso, _sclk;
   uint8_t  mosipinmask, clkpinmask, cspinmask, dcpinmask;
+////This def is for the Arduino.ORG M0!!!
+//#elif defined(ARDUINO_SAM_ZERO)
+//    volatile PORT_OUT_Type *mosiport, *clkport, *dcport, *rsport, *csport;
+//    int32_t  _cs, _dc, _rst, _mosi, _miso, _sclk;
+//    PORT_OUT_Type  mosipinmask, clkpinmask, cspinmask, dcpinmask;
 #elif defined (__arm__)
     volatile RwReg *mosiport, *clkport, *dcport, *rsport, *csport;
     int32_t  _cs, _dc, _rst, _mosi, _miso, _sclk;
     uint32_t  mosipinmask, clkpinmask, cspinmask, dcpinmask;
+#elif defined (ARDUINO_ARCH_ARC32)
+    int8_t  _cs, _dc, _rst, _mosi, _miso, _sclk;
+#elif defined (ESP8266)
+    int32_t  _cs, _dc, _rst, _mosi, _miso, _sclk;
 #endif
 };
 
