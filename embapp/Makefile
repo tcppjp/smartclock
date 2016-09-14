@@ -6,7 +6,7 @@ all:
 #
 #  アプリケーションファイル
 #
-APPL_CXXOBJS += rca_app.o reporter.o ntp.o ui.o speak.o
+APPL_CXXOBJS += rca_app.o reporter.o ntp.o ui.o speak.o dancing.o
 APPL_COBJS   +=
 APPL_CFG      = rca_app.cfg
 
@@ -67,6 +67,10 @@ APPL_CXXOBJS += SPI.o
 
 APPL_DIR     += $(RCA_DIR)/arduino_lib/hardware/arduino/samd/libraries/SoftwareSerial
 APPL_CXXOBJS += SoftwareSerial.o
+
+APPL_DIR     += $(RCA_DIR)/arduino_lib/libraries/Servo/src/
+APPL_DIR     += $(RCA_DIR)/arduino_lib/libraries/Servo/src/samd
+APPL_CXXOBJS += Servo.o
 
 APPL_DIR     += $(RCA_DIR)/examples/MultiTaskText/libraries/Grove_Digital_Light_Sensor
 APPL_CXXOBJS += Digital_Light_TSL2561.o

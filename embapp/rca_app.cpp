@@ -7,6 +7,8 @@
 #include "appconfig.h"
 #include "ui.h"
 #include "speak.h"
+#include "dancing.h"
+
 
 void setup()
 {
@@ -17,6 +19,7 @@ void setup()
 	SeeedOled.clearDisplay();
 	ui_setup();
   speak_init();
+  dancing_init();
 }
 
 void loop()
