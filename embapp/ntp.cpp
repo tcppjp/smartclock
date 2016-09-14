@@ -53,7 +53,7 @@ void ntp_setup()
 	SCSerialPrint("ntp_setup: FW Version:");
 	SCSerialPrintLn(WiFi.getVersion().c_str());
 
-    //act_tsk(NTP_TASK);
+    act_tsk(NTP_TASK);
 }
 
 void ntp_task(intptr_t exinf)
