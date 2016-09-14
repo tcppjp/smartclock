@@ -6,6 +6,7 @@
 
 #include "appconfig.h"
 #include "ui.h"
+#include "speak.h"
 
 void setup()
 {
@@ -15,6 +16,7 @@ void setup()
 	SeeedOled.setNormalDisplay();
 	SeeedOled.clearDisplay();
 	ui_setup();
+  speak_init();
 }
 
 void loop()
