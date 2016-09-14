@@ -824,34 +824,34 @@ void ui_setup(void)
 	digitalWrite(pins::TftScreenCS, HIGH);
 	digitalWrite(pins::TftResistiveTouchPanelCS, HIGH);
 
-	Serial.println("ui_setup: initializing TFT");
+	SCSerialPrintLn("ui_setup: initializing TFT");
 	tft.begin();
 
-	Serial.println("ui_setup: initializing touch screen");
+	SCSerialPrintLn("ui_setup: initializing touch screen");
 	if (!touch.begin()) {
-		Serial.println("ui_setup: something went horribly wrong! I just gtfo");
+		SCSerialPrintLn("ui_setup: something went horribly wrong! I just gtfo");
 	}
 
-	Serial.println("ui_setup: printing diag info");
+	SCSerialPrintLn("ui_setup: printing diag info");
 	// diagnostics info (we don't need this but it makes the startup
 	// routine about 20% cooler)
 	uint8_t x = tft.readcommand8(ILI9341_RDMODE);
-	Serial.print("Display Power Mode: 0x"); Serial.println(x, HEX);
+	SCSerialPrint("Display Power Mode: 0x"); SCSerialPrintLn(x, HEX);
 	x = tft.readcommand8(ILI9341_RDMADCTL);
-	Serial.print("MADCTL Mode: 0x"); Serial.println(x, HEX);
+	SCSerialPrint("MADCTL Mode: 0x"); SCSerialPrintLn(x, HEX);
 	x = tft.readcommand8(ILI9341_RDPIXFMT);
-	Serial.print("Pixel Format: 0x"); Serial.println(x, HEX);
+	SCSerialPrint("Pixel Format: 0x"); SCSerialPrintLn(x, HEX);
 	x = tft.readcommand8(ILI9341_RDIMGFMT);
-	Serial.print("Image Format: 0x"); Serial.println(x, HEX);
+	SCSerialPrint("Image Format: 0x"); SCSerialPrintLn(x, HEX);
 	x = tft.readcommand8(ILI9341_RDSELFDIAG);
-	Serial.print("Self Diagnostic: 0x"); Serial.println(x, HEX); 
+	SCSerialPrint("Self Diagnostic: 0x"); SCSerialPrintLn(x, HEX); 
 
-	Serial.print("Touch screen version: 0x"); Serial.println(touch.getVersion(), HEX); 
+	SCSerialPrint("Touch screen version: 0x"); SCSerialPrintLn(touch.getVersion(), HEX); 
 
 	g_rootElement = &g_setupScreen;
 	ui_invalidate();
 
-	Serial.println("ui_setup: initial screen created");
+	SCSerialPrintLn("ui_setup: initial screen created");
 
 	act_tsk(UI_TASK);
 	sta_cyc(UI_TOUCH_CYC);
@@ -859,6 +859,7 @@ void ui_setup(void)
 
 extern "C" void ui_task(intptr_t exinf)
 {
+	SCSerialPrintLn("ui_task: howdy!");
 	while (true) {
 
 		// (copied from Adafruit_STMPE610s.cpp)
@@ -893,6 +894,7 @@ extern "C" void ui_task(intptr_t exinf)
 			cb.swap(g_invoke);
 			sig_sem(UI_INVOKE_SEM);
 			if (cb) {
+				SCSerialPrintLn("ui_task: invoking");
 				cb();
 				sig_sem(UI_INVOKE_DONE_SEM);
 			}
@@ -914,9 +916,9 @@ extern "C" void ui_checkTouch(intptr_t exinf)
 
 void ui_showSplash()
 {
-	Serial.println("ui_showSplash: initializing TFT");
+	SCSerialPrintLn("ui_showSplash: initializing TFT");
 	tft.begin();
-	
+
 	uint16_t bgColor = tft.color565(255, 255, 255);
 	uint16_t bdrColor = tft.color565(0, 0, 255);
 	uint16_t txtColor = tft.color565(0, 0, 0);
