@@ -6,7 +6,7 @@ all:
 #
 #  アプリケーションファイル
 #
-APPL_CXXOBJS += rca_app.o reporter.o ntp.o ui.o speak.o
+APPL_CXXOBJS += rca_app.o reporter.o ntp.o ui.o speak.o utils.o
 APPL_COBJS   +=
 APPL_CFG      = rca_app.cfg
 
