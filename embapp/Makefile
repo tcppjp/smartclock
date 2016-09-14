@@ -50,14 +50,6 @@ APPL_DIR     +=
 APPL_DIR     += $(RCA_DIR)/arduino_lib/libraries/ESP8266_Arudino_AT
 APPL_CXXOBJS += ESP8266.o
 
-APPL_DIR     += $(RCA_DIR)/arduino_lib/libraries/Milkcocoa_Arduino_SDK
-APPL_DIR     += $(RCA_DIR)/arduino_lib/libraries/Milkcocoa_Arduino_SDK/aJson
-APPL_DIR     += $(RCA_DIR)/arduino_lib/libraries/Milkcocoa_Arduino_SDK/include
-APPL_DIR     += $(RCA_DIR)/arduino_lib/libraries/Milkcocoa_Arduino_SDK/include/aJson
-APPL_DIR     += $(RCA_DIR)/arduino_lib/libraries/Milkcocoa_Arduino_SDK/include/Adafruit
-APPL_CXXOBJS += aJSON.o Milkcocoa.o Adafruit_MQTT.o Adafruit_MQTT_Client.o
-APPL_COBJS   += stringbuffer.o
-
 APPL_DIR     += $(RCA_DIR)/examples/MultiTaskText/libraries/OLED_Display12864
 APPL_CXXOBJS += SeeedOLED.o
 APPL_COBJS   +=
