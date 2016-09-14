@@ -11,10 +11,8 @@
 void setup()
 {
  	Wire.begin();
-	SeeedOled.init();
-	SeeedOled.deactivateScroll();
-	SeeedOled.setNormalDisplay();
-	SeeedOled.clearDisplay();
+	Serial.begin(115200);
+	ui_showSplash();
 	ui_setup();
   speak_init();
 }

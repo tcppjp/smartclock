@@ -900,7 +900,28 @@ extern "C" void ui_checkTouch(intptr_t exinf)
 	iwup_tsk(UI_TASK);
 }
 
-extern "C"
+void ui_showSplash()
+{
+	Serial.println("ui_showSplash: initializing TFT");
+	tft.begin();
+	
+	uint16_t bgColor = tft.color565(255, 255, 255);
+	uint16_t bdrColor = tft.color565(0, 0, 255);
+	uint16_t txtColor = tft.color565(0, 0, 0);
+	tft.fillRect(0, 0, tft.width(), 20, bdrColor);
+	tft.fillRect(0, 20, 20, tft.height() - 40, bdrColor);
+	tft.fillRect(tft.width() - 20, 20, 20, tft.height() - 40, bdrColor);
+	tft.fillRect(0, tft.height() - 20, tft.width(), 20, bdrColor);
+	tft.fillRect(20, 20, tft.width() - 40, tft.height() - 40, bgColor);
+	tft.setTextColor(txtColor);
+	tft.setTextSize(2);
+	tft.setCursor(30, 100);
+	tft.println("HOWDY!");
+	tft.setTextSize(1);
+	tft.setCursor(30, 180);
+	tft.println("You'll never be tardy again");
+}
+
 void ui_showFatalError(const char *msg)
 {
 	uint16_t bgColor = tft.color565(255, 255, 255);

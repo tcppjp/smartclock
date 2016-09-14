@@ -2,6 +2,15 @@
 #define _LCD_H
 
 #ifdef __cplusplus
+#include <functional>
+
+void ui_setup(void);
+void ui_showSplash();
+void ui_showFatalError(const char *msg);
+void ui_invokeSync(std::function<void()>);
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
