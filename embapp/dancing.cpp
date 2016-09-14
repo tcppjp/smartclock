@@ -20,7 +20,6 @@ void dancing_init() // 初期設定
 {
   initServo();          // サーボの初期センタリング
   dly_tsk (100);
-  act_tsk(DANCING_TASK);
 }
 
 void dancing_task(intptr_t exinf) // メインループ

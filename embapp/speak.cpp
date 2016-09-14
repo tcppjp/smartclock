@@ -9,7 +9,6 @@ void speak_init() // 初期設定
   aserial.begin(9600);
   dly_tsk (100);
   aserial.write('?');
-  act_tsk(SPEAK_TASK);
 }
 
 void speak_task(intptr_t exinf) // メインループ

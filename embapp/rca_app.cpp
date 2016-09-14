@@ -8,6 +8,7 @@
 #include "ui.h"
 #include "speak.h"
 #include "dancing.h"
+#include "timecheck.h"
 
 
 void setup()
@@ -20,6 +21,7 @@ void setup()
 	ui_setup();
   speak_init();
   dancing_init();
+  timecheck_init();
 }
 
 void loop()
