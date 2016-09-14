@@ -1,6 +1,8 @@
 #include "rca.h"
 #include <functional>
 #include <string>
+#include <tuple>
+#include <utility>
 #include "SPI.h"
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
@@ -34,6 +36,11 @@ namespace
 		uint16_t buttonShadow = tft.color565(128, 128, 128);
 		uint16_t buttonDarkShadow = tft.color565(64, 64, 64);
 		uint16_t buttonText = tft.color565(0, 0, 0);
+		uint16_t fieldFace = tft.color565(255, 255, 255);
+		uint16_t fieldText = tft.color565(0, 0, 0);
+		uint16_t selectionColor = tft.color565(0, 0, 128);
+		uint16_t selectionText = tft.color565(255, 255, 255);
+		uint16_t caret = tft.color565(255, 0, 0);
 	}
 
 	void ui_invalidate(const SCRect &rt);
@@ -120,6 +127,10 @@ namespace
 			}
 			o->_parent = this;
 			o->invalidate();
+		}
+		bool hasKeyboardFocus()
+		{
+			return g_keyboardFocusElement == this;
 		}
 		void focus()
 		{
@@ -211,6 +222,8 @@ namespace
 		virtual void gotFocus()
 		{ }
 		virtual void lostFocus()
+		{ }
+		virtual void clientCharInput(char c)
 		{ }
 	};	
 
@@ -329,6 +342,7 @@ namespace
 		HeapTextStorage()
 		{ }
 		void setText(const char *text) { _text = text; }
+		void setText(const std::string &text) { _text = text.c_str(); }
 		const char *text() { return _text.c_str(); }
 	};
 
@@ -416,6 +430,161 @@ namespace
 		}
 	};
 
+	template <class TextStor = HeapTextStorage>
+	class EntryUIElement : public UIElement, public TextStor
+	{
+		int8_t _markIndex, _selIndex;
+		bool _isPassword;
+
+		bool canFitText(const char *s)
+		{
+			tft.setTextSize(2);
+
+			int16_t tx, ty; uint16_t tw, th;
+			tft.getTextBounds(const_cast<char*>(s), 0, 0, &tx, &ty, &tw, &th);
+			return tx + tw < size().w;
+		}
+
+		int charIndexAtLocation(const SCPoint& p)
+		{
+			tft.setTextSize(2);
+
+			std::string str = this->text();
+			if (p.x < 0) {
+				return 0;
+			}
+
+			int16_t tx, ty; uint16_t tw, th;
+			tft.getTextBounds(const_cast<char*>(str.c_str()), 0, 0, &tx, &ty, &tw, &th);
+			if (p.x > tx + tw) {
+				return static_cast<int> (str.size());
+			}
+
+			int lastRight = 0;
+			for (size_t i = 0; i < str.size(); ++i) {
+				char c = str[i + 1];
+				if (i + 1 < str.size()) {
+					str[i + 1] = 0;
+				}
+				tft.getTextBounds(const_cast<char*>(str.c_str()), 0, 0, &tx, &ty, &tw, &th);
+				int right = tx + tw;
+				if (i + 1 < str.size()) {
+					str[i + 1] = c;
+				}
+
+				if (p.x < (right + lastRight) / 2) {
+					return static_cast<int> (i);
+				}
+			}
+
+			return static_cast<int> (str.size());
+		}
+	public:
+		EntryUIElement() :
+			_markIndex(0),
+			_selIndex(0),
+			_isPassword(false)
+		{ }
+		void setIsPassword(bool p)
+		{
+			_isPassword = p;
+			invalidate();
+		}
+		void setSelectionRange(int mark, int sel = -1)
+		{
+			_markIndex = mark;
+			_selIndex = sel >= 0 ? sel : mark;
+			invalidate();
+		}
+		std::pair<int, int> selectionRange()
+		{
+			return std::make_pair<int, int>(
+				SCMin(_markIndex, _selIndex),
+				SCMax(_markIndex, _selIndex)
+			);
+		}
+		void clientPaint(const SCRect &scrBounds) override
+		{
+			int x = scrBounds.loc.x, y = scrBounds.loc.y;
+			int w = scrBounds.size.w, h = scrBounds.size.h;
+
+			const char *str = this->text();
+			if (_isPassword) {
+				str = "********************" + (20 - strlen(str));
+			}
+
+			tft.fillRect(x, y, w, h, colors::fieldFace);
+			tft.setTextSize(2);
+			tft.setCursor(x, y);
+			auto range = selectionRange();
+			int i = 0;
+			int curX = x;
+			while (*str) {
+				if (i >= range.first && i < range.second) {
+					tft.setTextColor(colors::selectionText, colors::selectionColor);
+				} else {
+					tft.setTextColor(colors::fieldText, colors::fieldFace);
+				}
+				tft.write(*str);
+				++str; ++i;
+				if (i == range.first) {
+					curX = tft.getCursorX();
+				}
+			}
+
+			if (hasKeyboardFocus()) {
+				tft.fillRect(curX, y, 1, h, colors::caret);
+			}
+		}
+		void clientMouseDown(const SCPoint &mouseLoc) override
+		{
+			setSelectionRange(charIndexAtLocation(mouseLoc));
+			invalidate();
+			focus();
+		}
+		void clientMouseMove(const SCPoint &mouseLoc) override
+		{
+			_selIndex = charIndexAtLocation(mouseLoc);
+			invalidate();
+		}
+		void clientMouseUp(const SCPoint &mouseLoc) override
+		{
+		}
+		void clientCharInput(char c) override
+		{
+			std::string str = this->text();
+			std::string str2;
+			auto range = selectionRange();
+			if (range.second != range.first) {
+				str2 = str.substr(range.second);
+				str.resize(range.first);
+			}
+			switch (c) {
+				case 8:
+					if (range.second == range.first && range.first > 0) {
+						str.resize(range.first - 1);
+					}
+					break;
+				case 13:
+					// TODO: handle return key
+					break;
+				default:
+					str.push_back(c);
+					range.first += 1;
+					break;
+			}
+
+			str += str2;
+			if (!canFitText(str.c_str())) {
+				return;
+			}
+
+			this->setText(str);
+			setSelectionRange(range.first);
+			invalidate();
+		}
+	};
+
 	constexpr const char *softwareKeyboardLines[][3] = {
 		{
 			"qwertyuiop",
@@ -484,6 +653,20 @@ namespace
 					break;
 			}
 		}
+
+		void sendChar(char c)
+		{
+			if (g_keyboardFocusElement) {
+				g_keyboardFocusElement->clientCharInput(c);
+			}
+		}
+
+		void sendBackSpace()
+		{
+			if (g_keyboardFocusElement) {
+				g_keyboardFocusElement->clientCharInput(8);
+			}
+		}
 	public:
 		SoftwareKeyboardUIElement() :
 			currentPlane(0)
@@ -521,6 +704,7 @@ namespace
 				appendChild(&e);
 				auto *ep = &e;
 				e.setOnActivated([this, ep] {
+					sendChar(ep->text()[0]);
 				});
 			}
 			appendChild(&shiftKey);
@@ -539,13 +723,13 @@ namespace
 				invalidate();
 			});
 			spaceBar.setOnActivated([&] {
-
+				sendChar(' ');
 			});
 			backSpaceKey.setOnActivated([&] {
-
+				sendBackSpace();
 			});
 			enterKey.setOnActivated([&] {
-
+				sendChar('\n');
 			});
 		}
 		void clientPaint(const SCRect &scrBounds) override
@@ -560,6 +744,7 @@ namespace
 
 	class SetupScreenUIElement : public UIElement
 	{
+		EntryUIElement<> field;
 		ButtonUIElement<> button;
 	public:
 		SetupScreenUIElement()
@@ -568,6 +753,11 @@ namespace
 			appendChild(&button);
 			button.setBounds(SCRect {20, 20, 120, 40});
 			button.setText("Yay!");
+
+			appendChild(&field);
+			field.setBounds(SCRect {5, 5, 230, 24});
+			field.setText("hoge");
+
 			appendChild(&g_softwareKeyboard);
 		} 
 		void clientPaint(const SCRect &scrBounds) override
