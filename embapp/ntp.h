@@ -5,8 +5,10 @@
 extern "C" {
 #endif
 
+extern void ntp_setup();
+
+// DEFINITIONS BELOW ARE PRIVATE
 extern void ntp_update_cyc(intptr_t exinf);
-extern void ntp_init(intptr_t exinf);
 extern void ntp_task(intptr_t exinf);
 
 #ifdef __cplusplus

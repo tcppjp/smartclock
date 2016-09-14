@@ -7,14 +7,16 @@
 #include "appconfig.h"
 #include "ui.h"
 #include "speak.h"
+#include "ntp.h"
 
 void setup()
 {
  	Wire.begin();
 	Serial.begin(115200);
 	ui_showSplash();
+	speak_init();
+	ntp_setup();
 	ui_setup();
-  speak_init();
 }
 
 void loop()
