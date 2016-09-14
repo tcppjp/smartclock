@@ -23,7 +23,8 @@ namespace
 
 	class UIElement;
 
-	bool g_dirty = false;
+	bool g_dirty = true;
+	bool g_dirtyRectValid = false;
 	SCRect g_dirtyRect;
 	UIElement *g_rootElement = nullptr;
 	UIElement *g_mouseCaptureElement = nullptr;
@@ -59,13 +60,15 @@ namespace
 		UIElement *_prev, *_next; // cyclic
 		UIElement *_child; // first child
 		SCRect _bounds;
+		bool _needsUpdate;
 	public:
 		UIElement() :
 			_parent(nullptr),
 			_prev(nullptr),
 			_next(nullptr),
 			_child(nullptr),
-			_bounds {0, 0, 0, 0}
+			_bounds {0, 0, 0, 0},
+			_needsUpdate {true}
 		{ } 
 		~UIElement()
 		{
@@ -76,9 +79,9 @@ namespace
 		const SCRect &bounds() { return _bounds; }
 		void setBounds(const SCRect &newBounds)
 		{
-			invalidate();
+			invalidateRegion();
 			_bounds = newBounds;
-			invalidate();
+			invalidateRegion();
 		}
 		const SCSize &size() { return _bounds.size; }
 		void setSize(const SCSize &newSize)
@@ -93,7 +96,7 @@ namespace
 		void removeFromParent()
 		{
 			assert(_parent);
-			invalidate();
+			invalidateRegion();
 			if (_prev == this) {
 				assert(_next == this);
 				assert(_parent->_child == this);
@@ -166,6 +169,11 @@ namespace
 		}
 		void invalidate()
 		{
+			_needsUpdate = true;
+			g_dirty = true;
+		}
+		void invalidateRegion()
+		{
 			ui_invalidate(screenBounds());
 		}
 		template <class T>
@@ -197,19 +205,21 @@ namespace
 			});
 		}
 		void paint(const SCPoint &offset,
-			UIElementPaintContext &ctx)
+			UIElementPaintContext &ctx,
+			bool forceNeedsUpdate = false)
 		{
 			SCRect scrBounds = _bounds.translated(offset);
-			if (!scrBounds.intersectsWith(ctx.dirtyRect)) {
-				return;
-			}
-			if (ctx.layer >= ctx.firstLayer) {
+			// FIXME: repainting system is messed up; needs refactoring
+			if ((scrBounds.intersectsWith(ctx.dirtyRect) &&
+				ctx.layer >= ctx.firstLayer ) ||
+				_needsUpdate || forceNeedsUpdate) {
 				clientPaint(scrBounds);
 			}
 			ctx.layer += 1;
 			forEachChild([&] (UIElement *e) {
-				e->paint(scrBounds.loc, ctx);
+				e->paint(scrBounds.loc, ctx, _needsUpdate || forceNeedsUpdate);
 			});
+			_needsUpdate = false;
 		}
 		virtual void clientPaint(const SCRect &scrBounds)
 		{ }
@@ -237,12 +247,13 @@ namespace
 		if (r.empty()) {
 			return;
 		}
-		if (g_dirty) {
+		if (g_dirtyRectValid) {
 			g_dirtyRect = g_dirtyRect.unionWith(r);
 		} else {
 			g_dirtyRect = r;
-			g_dirty = true;
+			g_dirtyRectValid = true;
 		}
+		g_dirty = true;
 	}
 
 	inline void ui_invalidate()
@@ -257,6 +268,10 @@ namespace
 		}
 		SCRect rt = g_dirtyRect;
 		g_dirty = false;
+		if (!g_dirtyRectValid) {
+			rt = SCRect {0, 0, 0, 0};
+		}
+		g_dirtyRectValid = false;
 
 		UIElementPaintContext ctx;
 		ctx.dirtyRect = rt;
@@ -438,11 +453,14 @@ namespace
 
 		bool canFitText(const char *s)
 		{
+			if (*s == 0) {
+				return true;
+			}
 			tft.setTextSize(2);
 
 			int16_t tx, ty; uint16_t tw, th;
 			tft.getTextBounds(const_cast<char*>(s), 0, 0, &tx, &ty, &tw, &th);
-			return tx + tw < size().w;
+			return tx + tw < size().w - 8;
 		}
 
 		int charIndexAtLocation(const SCPoint& p)
@@ -454,9 +472,11 @@ namespace
 				return 0;
 			}
 
+			int px = p.x - 4;
+
 			int16_t tx, ty; uint16_t tw, th;
 			tft.getTextBounds(const_cast<char*>(str.c_str()), 0, 0, &tx, &ty, &tw, &th);
-			if (p.x > tx + tw) {
+			if (px > tx + tw) {
 				return static_cast<int> (str.size());
 			}
 
@@ -472,9 +492,11 @@ namespace
 					str[i + 1] = c;
 				}
 
-				if (p.x < (right + lastRight) / 2) {
+				if (px < (right + lastRight) / 2) {
 					return static_cast<int> (i);
 				}
+
+				lastRight = right;
 			}
 
 			return static_cast<int> (str.size());
@@ -513,12 +535,28 @@ namespace
 				str = "********************" + (20 - strlen(str));
 			}
 
-			tft.fillRect(x, y, w, h, colors::fieldFace);
+			tft.fillRect(x + 2, y + 2, w - 4, h - 4, colors::fieldFace);
+
+			uint16_t palette[4];
+			palette[0] = colors::buttonDarkShadow;
+			palette[1] = colors::buttonShadow;
+			palette[2] = colors::buttonFace;
+			palette[3] = colors::buttonHighlight;
+
+			tft.fillRect(x, y, w, 1, palette[0]);
+			tft.fillRect(x, y + 1, 1, h - 2, palette[0]);
+			tft.fillRect(x + 1, y + 1, w - 2, 1, palette[1]);
+			tft.fillRect(x + 1, y + 2, 1, h - 4, palette[1]);
+			tft.fillRect(x + w - 1, y + 1, 1, h - 1, palette[3]);
+			tft.fillRect(x, y + h - 1, w - 1, 1, palette[3]);
+			tft.fillRect(x + w - 2, y + 2, 1, h - 4, palette[2]);
+			tft.fillRect(x + 1, y + h - 2, w - 4, 1, palette[2]);
+
 			tft.setTextSize(2);
-			tft.setCursor(x, y);
+			tft.setCursor(x + 4, y + 4);
 			auto range = selectionRange();
 			int i = 0;
-			int curX = x;
+			int curX = x + 4;
 			while (*str) {
 				if (i >= range.first && i < range.second) {
 					tft.setTextColor(colors::selectionText, colors::selectionColor);
@@ -532,8 +570,13 @@ namespace
 				}
 			}
 
-			if (hasKeyboardFocus()) {
-				tft.fillRect(curX, y, 1, h, colors::caret);
+			if (hasKeyboardFocus() &&
+				range.first == range.second) {
+				tft.fillRect(curX, y + 4, 1, h - 8, colors::caret);
+				tft.fillRect(curX - 2, y + 4, 2, 1, colors::caret);
+				tft.fillRect(curX + 1, y + 4, 2, 1, colors::caret);
+				tft.fillRect(curX - 2, y + h - 4, 2, 1, colors::caret);
+				tft.fillRect(curX + 1, y + h - 4, 2, 1, colors::caret);
 			}
 		}
 		void clientMouseDown(const SCPoint &mouseLoc) override
@@ -563,6 +606,7 @@ namespace
 				case 8:
 					if (range.second == range.first && range.first > 0) {
 						str.resize(range.first - 1);
+						range.first -= 1;
 					}
 					break;
 				case 13:
@@ -751,7 +795,7 @@ namespace
 		{
 			setBounds(SCRect {0, 0, 240, 320});
 			appendChild(&button);
-			button.setBounds(SCRect {20, 20, 120, 40});
+			button.setBounds(SCRect {20, 30, 120, 40});
 			button.setText("Yay!");
 
 			appendChild(&field);
