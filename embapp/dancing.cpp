@@ -1,5 +1,6 @@
 #include "rca.h"
 
+#include "dancing.h"
 #include <Servo.h>      // サーボのライブラリ
 #include <Wire.h>       // I2Cライブラリ
 
@@ -11,35 +12,57 @@ int destR = svRc;       // サーボの目標角度（Roll）
 int destY = svYc;       // サーボの目標角度（Yaw）
 int spd = 0;            // サーボの速度。0が最速
 
+extern void servoMove ();
+extern void centering ();
+extern void initServo ();
+
 void dancing_init() // 初期設定
 {
-  Wire.begin();
   initServo();          // サーボの初期センタリング
   dly_tsk (100);
 }
 
-void dancing_task() // メインループ
+void dancing_task(intptr_t exinf) // メインループ
 {
-  spd = 0;           // サーボの速度
-  destY = svYc + 5; // 体を左に回す指定
-  servoMove();       // サーボを動かす
-  destY = svYc - 5; // 体を右に回す指定
-  servoMove();       // サーボを動かす
-  destY = svYc;      // 体を正面に向ける指定
-  servoMove();       // サーボを動かす
-  destP = svPc + 5; // 首を下に動かす指定
-  servoMove();       // サーボを動かす
-  delay (500);       // 0.5秒待つ
-  destP = svPc     ; // 首を元に戻す指定
-  servoMove();       // サーボを動かす
-  destR = svRc + 5; // 首を反時計回りに回す指定
-  servoMove();       // サーボを動かす
-  destR = svRc - 5; // 首を時計回りに回す指定
-  servoMove();       // サーボを動かす
-  destR = svRc;      // 首を元に戻す指定
-  servoMove();       // サーボを動かす
-  delay (1000);      // 1秒待つ
+  int i=0;
+  for(i=0;i<10;i++){
+    spd = 0;           // サーボの速度
+    destY = svYc + 5; // 体を左に回す指定
+    servoMove();       // サーボを動かす
+    destY = svYc - 5; // 体を右に回す指定
+    servoMove();       // サーボを動かす
+    destY = svYc;      // 体を正面に向ける指定
+    servoMove();       // サーボを動かす
+    destP = svPc + 5; // 首を下に動かす指定
+    servoMove();       // サーボを動かす
+    dly_tsk (500);       // 0.5秒待つ
+    destP = svPc     ; // 首を元に戻す指定
+    servoMove();       // サーボを動かす
+    destR = svRc + 5; // 首を反時計回りに回す指定
+    servoMove();       // サーボを動かす
+    destR = svRc - 5; // 首を時計回りに回す指定
+    servoMove();       // サーボを動かす
+    destR = svRc;      // 首を元に戻す指定
+    servoMove();       // サーボを動かす
+    dly_tsk (1000);      // 1秒待つ
+  }
 }
+
+//----------------------------------------------------------------------
+// サーボの設定
+//const int pinSvC = 12C;   // サーボ(センタリング用)をGPIO 5に割り当てる
+const int pinSvP = 4;   // サーボ(Pitch首上下)をGPIO 3に割り当てる
+const int pinSvR = 3;  // サーボ(Roll首回転)をGPIO 10に割り当てる
+const int pinSvY = 2;  // サーボ(Yaw体回転台)をGPIO 11に割り当てる
+//Servo svC;             // サーボのインスタンスを作る(センタリング用)
+Servo svP;             // サーボのインスタンスを作る(Pitch 首の縦振り用)
+Servo svR;             // サーボのインスタンスを作る(Roll 顔の回転用)
+Servo svY;             // サーボのインスタンスを作る(Yaw 体の回転用)
+int posP = svPc;        // サーボの現在の角度(Pitch)
+int posR = svRc;        // サーボの現在の角度(Roll)
+int posY = svYc;        // サーボの現在の角度(Yaw)
+
+//----------------------------------------------------------------------
 
 void servoMove (){       // サーボを動かす関数
   while (posP != destP){
@@ -50,7 +73,7 @@ void servoMove (){       // サーボを動かす関数
       posP--;
     }
     svP.write(posP);
-    delay (spd+15);
+    dly_tsk (spd+15);
   }
   while (posR != destR){
     svR.attach(pinSvR);
@@ -60,7 +83,7 @@ void servoMove (){       // サーボを動かす関数
       posR--;
     }
     svR.write(posR);
-    delay (spd+15);
+    dly_tsk (spd+15);
   }
   while (posY != destY){
     svY.attach(pinSvY);
@@ -70,7 +93,7 @@ void servoMove (){       // サーボを動かす関数
       posY--;
     }
     svY.write(posY);
-    delay (spd+15);
+    dly_tsk (spd+15);
   }
   svP.detach ();
   svR.detach ();
@@ -94,9 +117,9 @@ void initServo (){       // サーボの初回センタリング
   svP.write(svPc);
   svR.write(svRc);
   svY.write(svYc);
-  delay (500);
+  dly_tsk (500);
 //  svC.write(90);
-  delay (500);
+  dly_tsk (500);
 //  svC.detach ();
   svP.detach ();
   svR.detach ();
