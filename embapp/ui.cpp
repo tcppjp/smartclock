@@ -29,6 +29,7 @@ namespace
 	UIElement *g_rootElement = nullptr;
 	UIElement *g_mouseCaptureElement = nullptr;
 	UIElement *g_keyboardFocusElement = nullptr;
+	std::function<void()> g_invoke;
 
 	namespace colors
 	{
@@ -816,7 +817,7 @@ namespace
 }
 
 
-extern "C" void ui_setup(void)
+void ui_setup(void)
 {
 	pinMode(pins::TftScreenCS, OUTPUT);
 	pinMode(pins::TftResistiveTouchPanelCS, OUTPUT);
@@ -886,6 +887,17 @@ extern "C" void ui_task(intptr_t exinf)
     	SPI.setClockDivider(11); // 8-ish MHz (full! speed!)
       	SPI.setDataMode(SPI_MODE0);
 
+      	{
+			wai_sem(UI_INVOKE_SEM);
+			std::function<void()> cb;
+			cb.swap(g_invoke);
+			sig_sem(UI_INVOKE_SEM);
+			if (cb) {
+				cb();
+				sig_sem(UI_INVOKE_DONE_SEM);
+			}
+		}
+
 		ui_updateMouse();
 		if (!g_dirty) {
 			slp_tsk();
@@ -939,4 +951,13 @@ void ui_showFatalError(const char *msg)
 	tft.setTextSize(1);
 	tft.setCursor(30, 180);
 	tft.println(msg);
+}
+
+void ui_invokeSync(std::function<void()> cb)
+{
+	wai_sem(UI_INVOKE_SEM);
+	g_invoke = cb;
+	sig_sem(UI_INVOKE_SEM);
+	wup_tsk(UI_TASK);
+	wai_sem(UI_INVOKE_DONE_SEM);
 }

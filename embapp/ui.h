@@ -14,10 +14,8 @@ void ui_invokeSync(std::function<void()>);
 extern "C" {
 #endif
 
-void ui_setup(void);
 void ui_task(intptr_t exinf);
 void ui_checkTouch(intptr_t exinf);
-void ui_showFatalError(const char *msg);
 
 #ifdef __cplusplus
 };
