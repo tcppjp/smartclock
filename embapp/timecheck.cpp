@@ -14,6 +14,7 @@ void timecheck_task(intptr_t exinf){
   int alarmminute=minute(); //アラーム設定時刻（分）
   int alarmtime=(alarmhour*60+alarmminute)*60+second(); //アラーム鳴動時刻
   int afteroneminute=0;
+  dly_tsk(7000);
 //  int realtime=(hour()*60+minute())*60+second(); //現在時刻
   while(1){
     //Serial.println(alarmtime);
@@ -29,6 +30,9 @@ void timecheck_task(intptr_t exinf){
         }
         dly_tsk(500);
       }
+    }
+    if (second() % 30 == 0) {
+      act_tsk(SPEAK_TASK);
     }
     dly_tsk(500);
   }
