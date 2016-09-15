@@ -64,12 +64,15 @@ void ntp_task(intptr_t exinf)
         SCSerialPrint("ntp_task: to station err\r\n");
     }
 
-    if (WiFi.joinAP(STA_SSID, STA_PASSWORD)) {
-        SCSerialPrint("ntp_task: Join AP success\r\n");
-        SCSerialPrint("ntp_task: IP: ");
-        SCSerialPrintLn(WiFi.getLocalIP().c_str());
-    } else {
-        SCSerialPrint("ntp_task: Join AP failure\r\n");
+    for (int i = 0; i < 10; ++i) {
+        if (WiFi.joinAP(STA_SSID, STA_PASSWORD)) {
+            SCSerialPrint("ntp_task: Join AP success\r\n");
+            SCSerialPrint("ntp_task: IP: ");
+            SCSerialPrintLn(WiFi.getLocalIP().c_str());
+            break;
+        } else {
+            SCSerialPrint("ntp_task: Join AP failure\r\n");
+        }
     }
 
     if (WiFi.stopServer()) {
