@@ -15,12 +15,10 @@ void setup()
 {
  	Wire.begin();
 	Serial.begin(115200);
-	ui_showSplash();
 	speak_init();
-	// ntp_setup();
+	ntp_setup();
 	dancing_init();
 	timecheck_init();
-	ui_setup();
 }
 
 void loop()

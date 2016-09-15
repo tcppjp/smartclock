@@ -4,6 +4,7 @@
 
 void SCFatalError(const char *msg)
 {
-	ui_showFatalError(msg);
+	SCSerialPrintLn(msg);
+	SCSerialPrintLn("system halted.");
 	while (1) {}
 }
