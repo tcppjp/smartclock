@@ -24,6 +24,7 @@ void dancing_init() // 初期設定
 
 void dancing_task(intptr_t exinf) // メインループ
 {
+  return;
     spd = 0;           // サーボの速度
     destY = svYc + 5; // 体を左に回す指定
     servoMove();       // サーボを動かす
